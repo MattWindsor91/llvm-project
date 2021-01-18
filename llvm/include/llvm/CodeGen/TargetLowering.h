@@ -59,7 +59,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-
+#include "llvm/Support/Mutation.h" //@C4
 namespace llvm {
 
 class BranchProbability;
@@ -4522,6 +4522,10 @@ void GetReturnInfo(CallingConv::ID CC, Type *ReturnType, AttributeList attr,
                    SmallVectorImpl<ISD::OutputArg> &Outs,
                    const TargetLowering &TLI, const DataLayout &DL);
 
+// @C4
+inline TargetLowering::AtomicExpansionKind C4MutAddLower(Mutation m, TargetLowering::AtomicExpansionKind k) {
+  return C4Mut(m) ? k : TargetLowering::AtomicExpansionKind::None;
+}
 } // end namespace llvm
 
 #endif // LLVM_CODEGEN_TARGETLOWERING_H
