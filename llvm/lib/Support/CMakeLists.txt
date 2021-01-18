@@ -170,6 +170,7 @@ add_llvm_component_library(LLVMSupport
   regstrlcpy.c
   xxhash.cpp
   Z3Solver.cpp
+        Mutation.cpp
 
 # System
   Atomic.cpp
