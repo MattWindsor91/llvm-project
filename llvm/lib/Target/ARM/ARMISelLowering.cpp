@@ -18257,7 +18257,7 @@ ARMTargetLowering::shouldExpandAtomicCmpXchgInIR(AtomicCmpXchgInst *AI) const {
       !Subtarget->isThumb() || Subtarget->hasV8MBaselineOps();
   if (getTargetMachine().getOptLevel() != 0 && HasAtomicCmpXchg)
     return AtomicExpansionKind::LLSC;
-  return AtomicExpansionKind::None;
+  return C4MutAddLower(Mutation::ARMExpandCmpXchgO0ToLLSC, AtomicExpansionKind::LLSC);
 }
 
 bool ARMTargetLowering::shouldInsertFencesForAtomic(
