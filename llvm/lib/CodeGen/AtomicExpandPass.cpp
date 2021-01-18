@@ -13,7 +13,7 @@
 // AtomicCmpXchg, or type coercions.
 //
 //===----------------------------------------------------------------------===//
-
+#include "llvm/Support/Mutation.h" // @C4
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
