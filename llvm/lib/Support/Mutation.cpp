@@ -31,6 +31,9 @@ const std::string_view mutationName(Mutation m){
   if (Mutation::LeadingFenceIsTrailing <= m && m <= Mutation::EndLeadingFenceIsTrailing) {
     return "leading fence is trailing";
   }
+  if (Mutation::ARMDropDMB <= m && m < Mutation::EndARMDropDMB) {
+    return "ARM drop DMB";
+  }
 
   switch (m) {
   case Mutation::None:

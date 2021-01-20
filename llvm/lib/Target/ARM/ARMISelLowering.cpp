@@ -18177,11 +18177,11 @@ Instruction *ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
   case AtomicOrdering::Acquire:
     return nullptr; // Nothing to do
   case AtomicOrdering::SequentiallyConsistent:
-    if (!Inst->hasAtomicStore())
+    if (!Inst->hasAtomicStore() || c4MutOffset(Mutation::ARMDropDMB, 0))
       return nullptr; // Nothing to do
-    LLVM_FALLTHROUGH;
-  case AtomicOrdering::Release:
-  case AtomicOrdering::AcquireRelease:
+    goto emitLead;//LLVM_FALLTHROUGH;
+  case AtomicOrdering::Release: if (c4MutOffset(Mutation::ARMDropDMB, 1)) return nullptr; goto emitLead;
+  case AtomicOrdering::AcquireRelease: if (c4MutOffset(Mutation::ARMDropDMB, 2)) return nullptr; emitLead:
     if (Subtarget->preferISHSTBarriers())
       return makeDMB(Builder, ARM_MB::ISHST);
     // FIXME: add a comment with a link to documentation justifying this.
@@ -18201,10 +18201,10 @@ Instruction *ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
   case AtomicOrdering::Monotonic:
   case AtomicOrdering::Release:
     return nullptr; // Nothing to do
-  case AtomicOrdering::Acquire:
-  case AtomicOrdering::AcquireRelease:
-  case AtomicOrdering::SequentiallyConsistent:
-    return makeDMB(Builder, ARM_MB::ISH);
+  case AtomicOrdering::Acquire: if (c4MutOffset(Mutation::ARMDropDMB, 3)) return nullptr; goto emitTrail;
+  case AtomicOrdering::AcquireRelease: if (c4MutOffset(Mutation::ARMDropDMB, 4)) return nullptr; goto emitTrail;
+  case AtomicOrdering::SequentiallyConsistent: if (c4MutOffset(Mutation::ARMDropDMB, 4)) return nullptr;
+    emitTrail: return makeDMB(Builder, ARM_MB::ISH);
   }
   llvm_unreachable("Unknown fence ordering in emitTrailingFence");
 }

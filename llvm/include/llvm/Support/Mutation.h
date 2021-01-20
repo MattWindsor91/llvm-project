@@ -25,6 +25,9 @@ constexpr uint16_t NumRMWIdempotentCases = 5;
 // 0 is important as it is the target of the SwapBracketFences mutation.
 constexpr uint16_t NumLeadingTrailingFences = 3;
 
+// Number of DMB making endpoints in ARMISelLowering.
+constexpr uint16_t NumDMBs = 6;
+
 enum class Mutation : std::uint16_t {
   None = 0,
 
@@ -80,13 +83,24 @@ enum class Mutation : std::uint16_t {
    * AArch64ISelLowering
    */
 
+  // Drop a special-case in AArch64 cmpxchg lowering that prevents LLSC lowering.
+  // see AArch64ISelLowering.cpp:?
   AArch64ExpandCmpXchgO0ToLLSC,
 
   /*
    * ARMISelLowering
    */
 
+  // Drop a special-case in ARM cmpxchg lowering that prevents LLSC lowering.
+  // see ArmISellowering.cpp:?
   ARMExpandCmpXchgO0ToLLSC,
+
+  // Drop leading and trailing DMB barrier emissions.
+  // see ArmISelLowering.cpp:18180, 18183, 18184, 18204, 18205, 18206
+  ARMDropDMB,
+  // One sub-mutation for each case where we emit a DMB.
+  EndARMDropDMB = ARMDropDMB + NumDMBs - 1,
+
   Count,
 };
 
