@@ -32,7 +32,7 @@ const std::string_view mutationName(Mutation m){
   return "unknown";
 }
 
-void SetupMutation() {
+void setupMutation() {
   auto lstr = getenv("C4_MUTATION");
   if (lstr == nullptr) return;
 

@@ -36,21 +36,21 @@ enum class Mutation : std::uint16_t {
 extern Mutation C4Mutation;
 
 // Main toggle for whether a mutation is hit.
-inline bool C4Mut(Mutation m) {
-  if (C4Mutation == m) {
-    std::cerr << "MUTATION HIT: " << static_cast<std::uint16_t>(m) << std::endl;
+inline bool c4Mut(Mutation M) {
+  if (C4Mutation == M) {
+    std::cerr << "MUTATION HIT: " << static_cast<std::uint16_t>(M) << std::endl;
       return true;
   }
   return false;
 }
 
 // As above but adding an integer offset into the table.
-inline bool C4MutOffset(Mutation m, uint16_t off) {
-  return C4Mut(static_cast<Mutation>(static_cast<std::uint16_t>(m) + off));
+inline bool c4MutOffset(Mutation M, uint16_t Offset) {
+  return c4Mut(static_cast<Mutation>(static_cast<std::uint16_t>(M) + Offset));
 }
 
-void SetupMutation();
-const std::string_view MutationName(Mutation m);
+void setupMutation();
+const std::string_view mutationName(Mutation M);
 }
 
 #endif // LLVM_MUTATION_H

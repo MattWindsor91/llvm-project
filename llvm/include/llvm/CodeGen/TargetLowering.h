@@ -4523,8 +4523,8 @@ void GetReturnInfo(CallingConv::ID CC, Type *ReturnType, AttributeList attr,
                    const TargetLowering &TLI, const DataLayout &DL);
 
 // @C4
-inline TargetLowering::AtomicExpansionKind C4MutAddLower(Mutation m, TargetLowering::AtomicExpansionKind k) {
-  return C4Mut(m) ? k : TargetLowering::AtomicExpansionKind::None;
+inline TargetLowering::AtomicExpansionKind c4MutAddLower(Mutation M, TargetLowering::AtomicExpansionKind K) {
+  return c4Mut(M) ? K : TargetLowering::AtomicExpansionKind::None;
 }
 } // end namespace llvm
 

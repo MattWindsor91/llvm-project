@@ -64,7 +64,7 @@ enum class AtomicOrdering : unsigned {
   SequentiallyConsistent = 7,
   LAST = SequentiallyConsistent
 };
-bool C4MutAtomicOrderingTable(Mutation m, AtomicOrdering x, AtomicOrdering y); // definition at end
+bool c4MutAtomicOrderingTable(Mutation m, AtomicOrdering x, AtomicOrdering y); // definition at end
 bool operator<(AtomicOrdering, AtomicOrdering) = delete;
 bool operator>(AtomicOrdering, AtomicOrdering) = delete;
 bool operator<=(AtomicOrdering, AtomicOrdering) = delete;
@@ -99,7 +99,7 @@ inline bool isStrongerThan(AtomicOrdering ao, AtomicOrdering other) {
       /* acq_rel   */ { true,  true,  true,  true,  true,  true, false, false},
       /* seq_cst   */ { true,  true,  true,  true,  true,  true,  true, false},
   };
-  return C4MutAtomicOrderingTable(Mutation::FlipIsStrongerThan, ao, other) ^ lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
+  return c4MutAtomicOrderingTable(Mutation::FlipIsStrongerThan, ao, other) ^ lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
 }
 
 inline bool isAtLeastOrStrongerThan(AtomicOrdering ao, AtomicOrdering other) {
@@ -114,7 +114,7 @@ inline bool isAtLeastOrStrongerThan(AtomicOrdering ao, AtomicOrdering other) {
       /* acq_rel   */ { true,  true,  true,  true,  true,  true,  true, false},
       /* seq_cst   */ { true,  true,  true,  true,  true,  true,  true,  true},
   };
-  return C4MutAtomicOrderingTable(Mutation::FlipIsAtLeastOrStrongerThan, ao, other) ^ lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
+  return c4MutAtomicOrderingTable(Mutation::FlipIsAtLeastOrStrongerThan, ao, other) ^ lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
 }
 
 inline bool isStrongerThanUnordered(AtomicOrdering ao) {
@@ -149,16 +149,17 @@ inline AtomicOrderingCABI toCABI(AtomicOrdering ao) {
 
 // BEGIN C4 MUTATION STUFF
 
-inline uint16_t AtomicOrderingToMutationLookup(AtomicOrdering m) {
+inline uint16_t atomicOrderingToMutationLookup(AtomicOrdering O) {
   // We don't bother mutating consume.
-  auto mint = static_cast<uint16_t>(m);
-  return 3 <= mint ? mint - 1 : mint;
+  auto Oint = static_cast<uint16_t>(O);
+  return 3 <= Oint ? Oint - 1 : Oint;
+}
 }
 
 // Whether an entry into a 2-D atomic ordering table should be mutated.
-inline bool C4MutAtomicOrderingTable(Mutation m, AtomicOrdering x, AtomicOrdering y) {
-  auto off = (AtomicOrderingToMutationLookup(x) * MutableMemOrders) + AtomicOrderingToMutationLookup(y);
-  return C4MutOffset(m, off);
+inline bool c4MutAtomicOrderingTable(Mutation m, AtomicOrdering x, AtomicOrdering y) {
+  auto off = (atomicOrderingToMutationLookup(x) * MutableMemOrders) + atomicOrderingToMutationLookup(y);
+  return c4MutOffset(m, off);
 }
 } // end namespace llvm
 

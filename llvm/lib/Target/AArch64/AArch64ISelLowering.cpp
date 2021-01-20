@@ -14623,7 +14623,7 @@ AArch64TargetLowering::shouldExpandAtomicCmpXchgInIR(
   // situation where the monitor always gets cleared and the atomic operation
   // can never succeed. So at -O0 we need a late-expanded pseudo-inst instead.
   if (getTargetMachine().getOptLevel() == CodeGenOpt::None)
-    return C4MutAddLower(Mutation::AArch64ExpandCmpXchgO0ToLLSC, AtomicExpansionKind::LLSC);
+    return c4MutAddLower(Mutation::AArch64ExpandCmpXchgO0ToLLSC, AtomicExpansionKind::LLSC);
   return AtomicExpansionKind::LLSC;
 }
 

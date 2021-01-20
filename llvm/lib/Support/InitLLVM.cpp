@@ -28,7 +28,7 @@ InitLLVM::InitLLVM(int &Argc, const char **&Argv,
     sys::SetOneShotPipeSignalFunction(sys::DefaultOneShotPipeSignalHandler);
   sys::PrintStackTraceOnErrorSignal(Argv[0]);
   install_out_of_memory_new_handler();
-  SetupMutation(); //@C4
+  setupMutation(); //@C4
 #ifdef _WIN32
   // We use UTF-8 as the internal character encoding. On Windows,
   // arguments passed to main() may not be encoded in UTF-8. In order
