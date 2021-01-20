@@ -8,6 +8,7 @@
 #include <string>
 
 namespace llvm {
+// Global variable tracking the current mutation.
 llvm::Mutation C4Mutation = llvm::Mutation::None;
 
 
@@ -36,13 +37,14 @@ const std::string_view mutationName(Mutation m){
 }
 
 void setupMutation() {
-  auto lstr = getenv("C4_MUTATION");
-  if (lstr == nullptr) return;
+  auto *Cstr = getenv("C4_MUTATION");
+  if (Cstr == nullptr) return;
 
-  std::string lsstr{lstr};
-  auto lint = std::stoi(lsstr);
-  C4Mutation = static_cast<llvm::Mutation>(lint % static_cast<int>(llvm::Mutation::Count));
+  std::string Str{Cstr};
+  auto Int = std::stoi(Str);
+  auto IntMod = Int % static_cast<int>(llvm::Mutation::Count);
+  C4Mutation = static_cast<llvm::Mutation>(IntMod);
 
-  std::cerr << "MUTATION SELECTED: " << lint << "(= " << mutationName(C4Mutation) << ")" << std::endl;
+  std::cerr << "MUTATION SELECTED: " << IntMod << " (= " << mutationName(C4Mutation) << ", input=" << Int << ")" << std::endl;
 }
 }
