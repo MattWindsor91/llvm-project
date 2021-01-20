@@ -19,8 +19,11 @@ const std::string_view mutationName(Mutation m){
   if (Mutation::FlipIsAtLeastOrStrongerThan <= m && m <= Mutation::EndFlipIsAtLeastOrStrongerThan) {
     return "flip isAtLeastOrStrongerThan";
   }
-  if (Mutation::WeakenCABI <= m && m <= Mutation::WeakenCABI) {
+  if (Mutation::WeakenCABI <= m && m <= Mutation::EndWeakenCABI) {
     return "weaken CABI";
+  }
+  if (Mutation::MarkRMWIdempotent <= m && m <= Mutation::EndMarkRMWIdempotent) {
+    return "mark RMW idempotent";
   }
 
   switch (m) {
