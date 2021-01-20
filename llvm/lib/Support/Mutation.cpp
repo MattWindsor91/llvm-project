@@ -20,7 +20,7 @@ const std::string_view mutationName(Mutation m){
     return "flip isAtLeastOrStrongerThan";
   }
   if (Mutation::WeakenCABI <= m && m <= Mutation::WeakenCABI) {
-    return "weaken CABI"
+    return "weaken CABI";
   }
 
   switch (m) {
