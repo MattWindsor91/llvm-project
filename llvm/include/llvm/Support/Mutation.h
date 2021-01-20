@@ -84,7 +84,7 @@ enum class Mutation : std::uint16_t {
    */
 
   // Drop a special-case in AArch64 cmpxchg lowering that prevents LLSC lowering.
-  // see AArch64ISelLowering.cpp:?
+  // see AArch64ISelLowering.cpp:14626
   AArch64ExpandCmpXchgO0ToLLSC,
 
   /*
@@ -92,11 +92,11 @@ enum class Mutation : std::uint16_t {
    */
 
   // Drop a special-case in ARM cmpxchg lowering that prevents LLSC lowering.
-  // see ArmISellowering.cpp:?
+  // see ARMISelLowering.cpp:18260
   ARMExpandCmpXchgO0ToLLSC,
 
   // Drop leading and trailing DMB barrier emissions.
-  // see ArmISelLowering.cpp:18180, 18183, 18184, 18204, 18205, 18206
+  // see ARMISelLowering.cpp:18180, 18183, 18184, 18204, 18205, 18206
   ARMDropDMB,
   // One sub-mutation for each case where we emit a DMB.
   EndARMDropDMB = ARMDropDMB + NumDMBs - 1,
