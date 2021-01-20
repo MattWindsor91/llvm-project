@@ -132,7 +132,7 @@ inline bool isAcquireOrStronger(AtomicOrdering ao) {
 inline bool isReleaseOrStronger(AtomicOrdering ao) {
   return isAtLeastOrStrongerThan(ao, AtomicOrdering::Release);
 }
-
+inline bool c4WeakenCABI(AtomicOrderingCABI O); //@C4 defined below
 inline AtomicOrderingCABI toCABI(AtomicOrdering ao) {
   static const AtomicOrderingCABI lookup[8] = {
       /* NotAtomic */ AtomicOrderingCABI::relaxed,
@@ -144,7 +144,7 @@ inline AtomicOrderingCABI toCABI(AtomicOrdering ao) {
       /* acq_rel   */ AtomicOrderingCABI::acq_rel,
       /* seq_cst   */ AtomicOrderingCABI::seq_cst,
   };
-  return lookup[static_cast<size_t>(ao)];
+  auto l = lookup[static_cast<size_t>(ao)]; return c4WeakenCABI(l) ? AtomicOrderingCABI::relaxed : l;
 }
 
 // BEGIN C4 MUTATION STUFF
@@ -154,6 +154,12 @@ inline uint16_t atomicOrderingToMutationLookup(AtomicOrdering O) {
   auto Oint = static_cast<uint16_t>(O);
   return 3 <= Oint ? Oint - 1 : Oint;
 }
+
+// Whether to mutate by weakening the return of toCABI.
+inline bool c4WeakenCABI(AtomicOrderingCABI O) {
+  auto Oint = static_cast<uint16_t>(O);
+  // 2 is 'acquire', so we're mapping acquire-seq_cst to offsets 0-3.
+  return 2 <= Oint && c4MutOffset(Mutation::WeakenCABI, Oint - 2);
 }
 
 // Whether an entry into a 2-D atomic ordering table should be mutated.

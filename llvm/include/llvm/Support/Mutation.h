@@ -15,6 +15,9 @@ namespace llvm {
 constexpr uint16_t MutableMemOrders = 7;
 constexpr uint16_t MemOrderEntries = MutableMemOrders * MutableMemOrders;
 
+// Number of submutations for WeakenCABI: acquire, release, acq_rel, seq_cst.
+constexpr uint16_t NumCABIWeakenings = 4;
+
 enum class Mutation : std::uint16_t {
   None = 0,
 
@@ -27,6 +30,11 @@ enum class Mutation : std::uint16_t {
   FlipIsAtLeastOrStrongerThan,
   // One sub-mutation for each pair of (viable) memory orders.
   EndFlipIsAtLeastOrStrongerThan = FlipIsAtLeastOrStrongerThan + MemOrderEntries - 1,
+
+  // Set acq/rel/acqrel/seq_cst (in that order) to relaxed in the C ABI mapping.
+  WeakenCABI,
+  // One sub-mutation for each memory order above.
+  EndWeakenCABI = WeakenCABI + NumCABIWeakenings - 1,
 
   AArch64ExpandCmpXchgO0ToLLSC,
   ARMExpandCmpXchgO0ToLLSC,

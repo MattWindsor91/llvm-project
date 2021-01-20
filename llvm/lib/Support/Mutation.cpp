@@ -18,6 +18,9 @@ const std::string_view mutationName(Mutation m){
   if (Mutation::FlipIsAtLeastOrStrongerThan <= m && m <= Mutation::EndFlipIsAtLeastOrStrongerThan) {
     return "flip isAtLeastOrStrongerThan";
   }
+  if (Mutation::WeakenCABI <= m && m <= Mutation::WeakenCABI) {
+    return "weaken CABI"
+  }
 
   switch (m) {
   case Mutation::None:
