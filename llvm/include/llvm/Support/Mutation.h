@@ -18,6 +18,9 @@ constexpr uint16_t MemOrderEntries = MutableMemOrders * MutableMemOrders;
 // Number of submutations for WeakenCABI: acquire, release, acq_rel, seq_cst.
 constexpr uint16_t NumCABIWeakenings = 4;
 
+// Number of submutations for MarkRMWIdempotent: add, sub, or, xor, and.
+constexpr uint16_t NumRMWIdempotentCases = 5;
+
 enum class Mutation : std::uint16_t {
   None = 0,
 
@@ -35,6 +38,11 @@ enum class Mutation : std::uint16_t {
   WeakenCABI,
   // One sub-mutation for each memory order above.
   EndWeakenCABI = WeakenCABI + NumCABIWeakenings - 1,
+
+  // Spuriously mark a RMW as idempotent.
+  MarkRMWIdempotent,
+  // One sub-mutation for each case in the switch statement.
+  EndMarkRMWIdempotent = MarkRMWIdempotent + NumRMWIdempotentCases - 1,
 
   AArch64ExpandCmpXchgO0ToLLSC,
   ARMExpandCmpXchgO0ToLLSC,

@@ -1357,16 +1357,16 @@ bool AtomicExpand::isIdempotentRMW(AtomicRMWInst* RMWI) {
 
   AtomicRMWInst::BinOp Op = RMWI->getOperation();
   switch(Op) {
-    case AtomicRMWInst::Add:
-    case AtomicRMWInst::Sub:
-    case AtomicRMWInst::Or:
+    case AtomicRMWInst::Add: return c4MutOffset(llvm::Mutation::MarkRMWIdempotent, 0) || C->isZero();
+    case AtomicRMWInst::Sub: return c4MutOffset(llvm::Mutation::MarkRMWIdempotent, 1) || C->isZero();
+    case AtomicRMWInst::Or: return c4MutOffset(llvm::Mutation::MarkRMWIdempotent, 2) || C->isZero();
     case AtomicRMWInst::Xor:
-      return C->isZero();
+      return c4MutOffset(llvm::Mutation::MarkRMWIdempotent, 3) || C->isZero();
     case AtomicRMWInst::And:
-      return C->isMinusOne();
+      return c4MutOffset(llvm::Mutation::MarkRMWIdempotent, 4) || C->isMinusOne();
     // FIXME: we could also treat Min/Max/UMin/UMax by the INT_MIN/INT_MAX/...
     default:
-      return false;
+      return false; // No mutant here because these other cases aren't available in C
   }
 }
 
