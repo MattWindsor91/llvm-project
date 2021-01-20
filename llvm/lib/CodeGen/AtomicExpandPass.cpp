@@ -104,7 +104,7 @@ namespace {
     bool expandAtomicCmpXchg(AtomicCmpXchgInst *CI);
     bool isIdempotentRMW(AtomicRMWInst *RMWI);
     bool simplifyIdempotentRMW(AtomicRMWInst *RMWI);
-
+    inline Instruction *c4EmitLeadingFence(uint16_t Offset, IRBuilder<> &Builder, Instruction *I, AtomicOrdering Order); //@C4
     bool expandAtomicOpToLibcall(Instruction *I, unsigned Size, Align Alignment,
                                  Value *PointerOperand, Value *ValueOperand,
                                  Value *CASExpected, AtomicOrdering Ordering,
@@ -114,7 +114,7 @@ namespace {
     void expandAtomicStoreToLibcall(StoreInst *LI);
     void expandAtomicRMWToLibcall(AtomicRMWInst *I);
     void expandAtomicCASToLibcall(AtomicCmpXchgInst *I);
-
+    inline Instruction *c4EmitTrailingFence(uint16_t Offset, IRBuilder<> &Builder, Instruction *I, AtomicOrdering Order); //@C4
     friend bool
     llvm::expandAtomicRMWToCmpXchg(AtomicRMWInst *AI,
                                    CreateCmpXchgInstFun CreateCmpXchg);
@@ -315,9 +315,9 @@ bool AtomicExpand::runOnFunction(Function &F) {
 bool AtomicExpand::bracketInstWithFences(Instruction *I, AtomicOrdering Order) {
   IRBuilder<> Builder(I);
 
-  auto LeadingFence = TLI->emitLeadingFence(Builder, I, Order);
+  auto LeadingFence = c4EmitLeadingFence(0, Builder, I, Order);
 
-  auto TrailingFence = TLI->emitTrailingFence(Builder, I, Order);
+  auto TrailingFence = c4EmitTrailingFence(0, Builder, I, Order);
   // We have a guard here because not every atomic operation generates a
   // trailing fence.
   if (TrailingFence)
@@ -1207,7 +1207,7 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   std::prev(BB->end())->eraseFromParent();
   Builder.SetInsertPoint(BB);
   if (ShouldInsertFencesForAtomic && UseUnconditionalReleaseBarrier)
-    TLI->emitLeadingFence(Builder, CI, SuccessOrder);
+    c4EmitLeadingFence(1, Builder, CI, SuccessOrder);
 
   PartwordMaskValues PMV =
       createMaskInstrs(Builder, CI, CI->getCompareOperand()->getType(), Addr,
@@ -1229,7 +1229,7 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 
   Builder.SetInsertPoint(ReleasingStoreBB);
   if (ShouldInsertFencesForAtomic && !UseUnconditionalReleaseBarrier)
-    TLI->emitLeadingFence(Builder, CI, SuccessOrder);
+    c4EmitLeadingFence(2, Builder, CI, SuccessOrder);
   Builder.CreateBr(TryStoreBB);
 
   Builder.SetInsertPoint(TryStoreBB);
@@ -1267,7 +1267,7 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   // necessary.
   Builder.SetInsertPoint(SuccessBB);
   if (ShouldInsertFencesForAtomic)
-    TLI->emitTrailingFence(Builder, CI, SuccessOrder);
+    c4EmitTrailingFence(1, Builder, CI, SuccessOrder);
   Builder.CreateBr(ExitBB);
 
   Builder.SetInsertPoint(NoStoreBB);
@@ -1290,7 +1290,7 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   if (CI->isWeak())
     LoadedFailure->addIncoming(LoadedTryStore, TryStoreBB);
   if (ShouldInsertFencesForAtomic)
-    TLI->emitTrailingFence(Builder, CI, FailureOrder);
+    c4EmitTrailingFence(2, Builder, CI, FailureOrder);
   Builder.CreateBr(ExitBB);
 
   // Finally, we have control-flow based knowledge of whether the cmpxchg
@@ -1837,3 +1837,18 @@ bool AtomicExpand::expandAtomicOpToLibcall(
   I->eraseFromParent();
   return true;
 }
+
+// C4 stuff
+
+inline Instruction *AtomicExpand::c4EmitLeadingFence(uint16_t Offset, IRBuilder<> &Builder, Instruction *I, AtomicOrdering Order) {
+  auto IsInBracket = Offset == 0;
+  auto Swap = (IsInBracket && c4Mut(Mutation::SwapBracketFences)) || c4MutOffset(Mutation::LeadingFenceIsTrailing, Offset);
+  return Swap ? TLI->emitTrailingFence(Builder, I, Order) : TLI->emitLeadingFence(Builder, I, Order);
+}
+
+inline Instruction *AtomicExpand::c4EmitTrailingFence(uint16_t Offset, IRBuilder<> &Builder, Instruction *I, AtomicOrdering Order) {
+  auto IsInBracket = Offset == 0;
+  auto Swap = (IsInBracket && c4Mut(Mutation::SwapBracketFences)) || c4MutOffset(Mutation::TrailingFenceIsLeading, Offset);
+  return Swap ? TLI->emitLeadingFence(Builder, I, Order) : TLI->emitTrailingFence(Builder, I, Order);
+}
+
