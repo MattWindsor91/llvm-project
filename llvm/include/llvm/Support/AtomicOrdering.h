@@ -18,7 +18,7 @@
 #define LLVM_SUPPORT_ATOMICORDERING_H
 
 #include <cstddef>
-
+#include "Mutation.h" //@C4
 namespace llvm {
 
 /// Atomic ordering for C11 / C++11's memody models.
@@ -64,7 +64,7 @@ enum class AtomicOrdering : unsigned {
   SequentiallyConsistent = 7,
   LAST = SequentiallyConsistent
 };
-
+bool C4MutAtomicOrderingTable(Mutation m, AtomicOrdering x, AtomicOrdering y); // definition at end
 bool operator<(AtomicOrdering, AtomicOrdering) = delete;
 bool operator>(AtomicOrdering, AtomicOrdering) = delete;
 bool operator<=(AtomicOrdering, AtomicOrdering) = delete;
@@ -99,7 +99,7 @@ inline bool isStrongerThan(AtomicOrdering ao, AtomicOrdering other) {
       /* acq_rel   */ { true,  true,  true,  true,  true,  true, false, false},
       /* seq_cst   */ { true,  true,  true,  true,  true,  true,  true, false},
   };
-  return lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
+  return C4MutAtomicOrderingTable(Mutation::FlipIsStrongerThan, ao, other) ^ lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
 }
 
 inline bool isAtLeastOrStrongerThan(AtomicOrdering ao, AtomicOrdering other) {
@@ -114,7 +114,7 @@ inline bool isAtLeastOrStrongerThan(AtomicOrdering ao, AtomicOrdering other) {
       /* acq_rel   */ { true,  true,  true,  true,  true,  true,  true, false},
       /* seq_cst   */ { true,  true,  true,  true,  true,  true,  true,  true},
   };
-  return lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
+  return C4MutAtomicOrderingTable(Mutation::FlipIsAtLeastOrStrongerThan, ao, other) ^ lookup[static_cast<size_t>(ao)][static_cast<size_t>(other)];
 }
 
 inline bool isStrongerThanUnordered(AtomicOrdering ao) {
@@ -147,6 +147,13 @@ inline AtomicOrderingCABI toCABI(AtomicOrdering ao) {
   return lookup[static_cast<size_t>(ao)];
 }
 
+// BEGIN C4 MUTATION STUFF
+
+// Whether an entry into a 2-D atomic ordering table should be mutated.
+inline bool C4MutAtomicOrderingTable(Mutation m, AtomicOrdering x, AtomicOrdering y) {
+  auto off = (static_cast<uint16_t>(x) * MemOrders) + static_cast<uint16_t>(y);
+  return C4MutOffset(m, off);
+}
 } // end namespace llvm
 
 #endif // LLVM_SUPPORT_ATOMICORDERING_H
