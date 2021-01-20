@@ -12,10 +12,10 @@ llvm::Mutation C4Mutation = llvm::Mutation::None;
 
 
 const std::string_view mutationName(Mutation m){
-  if (Mutation::FlipIsStrongerThan <= m && m < Mutation::EndFlipIsStrongerThan) {
+  if (Mutation::FlipIsStrongerThan <= m && m <= Mutation::EndFlipIsStrongerThan) {
     return "flip isStrongerThan";
   }
-  if (Mutation::FlipIsAtLeastOrStrongerThan <= m && m < Mutation::EndFlipIsAtLeastOrStrongerThan) {
+  if (Mutation::FlipIsAtLeastOrStrongerThan <= m && m <= Mutation::EndFlipIsAtLeastOrStrongerThan) {
     return "flip isAtLeastOrStrongerThan";
   }
 

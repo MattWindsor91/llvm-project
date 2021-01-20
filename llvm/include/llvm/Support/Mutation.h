@@ -10,20 +10,25 @@
 
 namespace llvm {
 
-// Number of memory orders in LLVM.
+// Number of memory orders in LLVM, minus consume.
 // Ideally wouldn't be hardcoded, but we can't depend on AtomicOrdering here.
-constexpr uint16_t MemOrders = 8;
-constexpr uint16_t MemOrderEntries = MemOrders * MemOrders;
+constexpr uint16_t MutableMemOrders = 7;
+constexpr uint16_t MemOrderEntries = MutableMemOrders * MutableMemOrders;
 
 enum class Mutation : std::uint16_t {
   None = 0,
+
   // One mutation each for every possible bitflip in the IsStrongerThan table.
   FlipIsStrongerThan,
-  EndFlipIsStrongerThan = FlipIsStrongerThan + MemOrderEntries,
+  // One sub-mutation for each pair of (viable) memory orders.
+  EndFlipIsStrongerThan = FlipIsStrongerThan + MemOrderEntries - 1,
+
   // As above but for IsAtLeastOrStrongerThan.
-  FlipIsAtLeastOrStrongerThan = EndFlipIsStrongerThan,
-  EndFlipIsAtLeastOrStrongerThan = FlipIsAtLeastOrStrongerThan + MemOrderEntries,
-  AArch64ExpandCmpXchgO0ToLLSC = EndFlipIsAtLeastOrStrongerThan,
+  FlipIsAtLeastOrStrongerThan,
+  // One sub-mutation for each pair of (viable) memory orders.
+  EndFlipIsAtLeastOrStrongerThan = FlipIsAtLeastOrStrongerThan + MemOrderEntries - 1,
+
+  AArch64ExpandCmpXchgO0ToLLSC,
   ARMExpandCmpXchgO0ToLLSC,
   Count,
 };

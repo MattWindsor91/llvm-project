@@ -149,9 +149,15 @@ inline AtomicOrderingCABI toCABI(AtomicOrdering ao) {
 
 // BEGIN C4 MUTATION STUFF
 
+inline uint16_t AtomicOrderingToMutationLookup(AtomicOrdering m) {
+  // We don't bother mutating consume.
+  auto mint = static_cast<uint16_t>(m);
+  return 3 <= mint ? mint - 1 : mint;
+}
+
 // Whether an entry into a 2-D atomic ordering table should be mutated.
 inline bool C4MutAtomicOrderingTable(Mutation m, AtomicOrdering x, AtomicOrdering y) {
-  auto off = (static_cast<uint16_t>(x) * MemOrders) + static_cast<uint16_t>(y);
+  auto off = (AtomicOrderingToMutationLookup(x) * MutableMemOrders) + AtomicOrderingToMutationLookup(y);
   return C4MutOffset(m, off);
 }
 } // end namespace llvm
