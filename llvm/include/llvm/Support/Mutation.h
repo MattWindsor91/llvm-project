@@ -121,7 +121,7 @@ inline bool c4MutOffset(Mutation M, uint16_t Offset) {
 }
 
 void setupMutation();
-const std::string_view mutationName(Mutation M);
+const char *mutationName(Mutation M);
 }
 
 #endif // LLVM_MUTATION_H
