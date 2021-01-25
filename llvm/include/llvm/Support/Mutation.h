@@ -28,6 +28,10 @@ constexpr uint16_t NumLeadingTrailingFences = 3;
 // Number of DMB making endpoints in ARMISelLowering.
 constexpr uint16_t NumDMBs = 6;
 
+// Number of sync making endpoints in PPCISelLowering.
+constexpr uint16_t NumSyncs = 4;
+
+
 enum class Mutation : std::uint16_t {
   None = 0,
 
@@ -100,6 +104,16 @@ enum class Mutation : std::uint16_t {
   ARMDropDMB,
   // One sub-mutation for each case where we emit a DMB.
   EndARMDropDMB = ARMDropDMB + NumDMBs - 1,
+
+  /*
+   * PPCISelLowering
+   */
+
+  // Drop sync barrier emissions.
+  // see PPCISelLowering.cpp:11303, 11305, 11317, 11323
+  PPCDropSync,
+  // One sub-mutation for each case where we emit a sync.
+  EndPPCDropSync = PPCDropSync + NumSyncs - 1,
 
   Count,
 };

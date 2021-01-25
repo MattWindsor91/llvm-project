@@ -97,7 +97,7 @@
 #include <list>
 #include <utility>
 #include <vector>
-
+#include "llvm/Support/Mutation.h" //@C4
 using namespace llvm;
 
 #define DEBUG_TYPE "ppc-lowering"
@@ -11300,9 +11300,9 @@ Instruction *PPCTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
                                                  Instruction *Inst,
                                                  AtomicOrdering Ord) const {
   if (Ord == AtomicOrdering::SequentiallyConsistent)
-    return callIntrinsic(Builder, Intrinsic::ppc_sync);
+    return c4MutOffset(Mutation::PPCDropSync, 0) ? nullptr : callIntrinsic(Builder, Intrinsic::ppc_sync);
   if (isReleaseOrStronger(Ord))
-    return callIntrinsic(Builder, Intrinsic::ppc_lwsync);
+    return c4MutOffset(Mutation::PPCDropSync, 1) ? nullptr : callIntrinsic(Builder, Intrinsic::ppc_lwsync);
   return nullptr;
 }
 
@@ -11314,13 +11314,13 @@ Instruction *PPCTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
     // http://www.rdrop.com/users/paulmck/scalability/paper/N2745r.2011.03.04a.html
     // and http://www.cl.cam.ac.uk/~pes20/cppppc/ for justification.
     if (isa<LoadInst>(Inst) && Subtarget.isPPC64())
-      return Builder.CreateCall(
+      return c4MutOffset(Mutation::PPCDropSync, 2) ? nullptr : Builder.CreateCall(
           Intrinsic::getDeclaration(
               Builder.GetInsertBlock()->getParent()->getParent(),
               Intrinsic::ppc_cfence, {Inst->getType()}),
           {Inst});
     // FIXME: Can use isync for rmw operation.
-    return callIntrinsic(Builder, Intrinsic::ppc_lwsync);
+    return c4MutOffset(Mutation::PPCDropSync, 3) ? nullptr : callIntrinsic(Builder, Intrinsic::ppc_lwsync);
   }
   return nullptr;
 }

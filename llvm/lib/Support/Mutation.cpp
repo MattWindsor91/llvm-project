@@ -31,8 +31,11 @@ const char* mutationName(Mutation m){
   if (Mutation::LeadingFenceIsTrailing <= m && m <= Mutation::EndLeadingFenceIsTrailing) {
     return "leading fence is trailing";
   }
-  if (Mutation::ARMDropDMB <= m && m < Mutation::EndARMDropDMB) {
+  if (Mutation::ARMDropDMB <= m && m <= Mutation::EndARMDropDMB) {
     return "ARM drop DMB";
+  }
+  if (Mutation::PPCDropSync <= m && m <= Mutation::EndPPCDropSync) {
+    return "PPC drop sync";
   }
 
   switch (m) {
