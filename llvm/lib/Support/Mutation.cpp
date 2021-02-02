@@ -26,23 +26,23 @@ const char* mutationName(Mutation m){
     return "mark RMW idempotent";
   }
   if (Mutation::TrailingFenceIsLeading <= m && m <= Mutation::EndTrailingFenceIsLeading) {
-    return "trailing fence is leading";
+    return "TLn: trailing fence is leading";
   }
   if (Mutation::LeadingFenceIsTrailing <= m && m <= Mutation::EndLeadingFenceIsTrailing) {
-    return "leading fence is trailing";
+    return "LTn: leading fence is trailing";
   }
   if (Mutation::ARMDropDMB <= m && m <= Mutation::EndARMDropDMB) {
-    return "ARM drop DMB";
+    return "DDn: ARM drop DMB";
   }
   if (Mutation::PPCDropSync <= m && m <= Mutation::EndPPCDropSync) {
-    return "PPC drop sync";
+    return "DSn: PPC drop sync";
   }
 
   switch (m) {
   case Mutation::None:
     return "none";
   case Mutation::SwapBracketFences:
-    return "swap bracket fences";
+    return "SLT: swap bracket fences";
   case Mutation::AArch64ExpandCmpXchgO0ToLLSC:
     return "AArch64 cmpxchg -O0 -> LLSC";
   case Mutation::ARMExpandCmpXchgO0ToLLSC:
