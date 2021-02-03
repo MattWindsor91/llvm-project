@@ -17,6 +17,7 @@ const char* mutationName(Mutation m){
   // This should be in increasing order of mutation ID, to let the linear search work.
   std::map<Mutation, const char*> names = {
       {Mutation::None, "none"},
+      {Mutation::DropAtomicGuard, "DAG"},
       {Mutation::DropVolatileGuard, "DVG"},
       {Mutation::FlipIsStrongerThan, "FIS"},
       {Mutation::FlipIsAtLeastOrStrongerThan, "FIA"},

@@ -58,12 +58,21 @@ enum class Mutation : std::uint16_t {
    * Multiple files and architectures
    */
 
+  // [DAG] Disables strategic isAtomic() guards.
+  // See also the architecture-specific equivalents.
+  //
+  // Sites:
+  //  0: InstCombinePHI.cpp:548:
+  //     rationale: comment 'this transform is allowed in some cases for atomic
+  //       operations'.
+  DropAtomicGuard,
+
   // [DVG] Disables isVolatile() guards.
   //
-  // Rationale:
-  //  - InstCombineAtomicRMW.cpp:101:
-  //    comment ('we chose not to canonicalize out of general paranoia about
-  //    user expectations around volatile).
+  // Sites:
+  //  0: InstCombineAtomicRMW.cpp:101:
+  //     rationale: comment 'we chose not to canonicalize out of general
+  //       paranoia about user expectations around volatile'.
   //
   // see InstCombineAtomicRMW.cpp:101
   DropVolatileGuard,

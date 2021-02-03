@@ -545,7 +545,7 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
 
   // FIXME: This is overconservative; this transform is allowed in some cases
   // for atomic operations.
-  if (FirstLI->isAtomic())
+  if (FirstLI->isAtomic() && !c4MutOffset(Mutation::DropAtomicGuard, 0))
     return nullptr;
 
   // When processing loads, we need to propagate two bits of information to the
