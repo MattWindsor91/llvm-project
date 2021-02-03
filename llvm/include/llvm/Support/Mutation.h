@@ -18,8 +18,10 @@ constexpr uint16_t MemOrderEntries = MutableMemOrders * MutableMemOrders;
 // Number of submutations for WeakenCABI: acquire, release, acq_rel, seq_cst.
 constexpr uint16_t NumCABIWeakenings = 4;
 
-// Number of submutations for MarkRMWIdempotent: add, sub, or, xor, and.
-constexpr uint16_t NumRMWIdempotentCases = 5;
+// Number of variants for MarkRMWIdempotent*: add, sub, or, xor, and, xchg.
+// These are also the number of variants for MarkRMWSaturatingCombine, less one
+// because xchg is already true.
+constexpr uint16_t NumRMWCases = 6;
 
 // Number of leading/trailing fence pairs: 0 in bracket, 1 and 2 in cmpxchg.
 // 0 is important as it is the target of the SwapBracketFences mutation.
@@ -63,9 +65,9 @@ enum class Mutation : std::uint16_t {
 
   // Spuriously mark a RMW as idempotent. (Likely only killed on x86)
   // see AtomicExpandPass.cpp:1360, 1361, 1362, 1364, 1366.
-  MarkRMWIdempotent,
+  MarkRMWIdempotentExpand,
   // One sub-mutation for each case in the switch statement.
-  EndMarkRMWIdempotent = MarkRMWIdempotent + NumRMWIdempotentCases - 1,
+  EndMarkRMWIdempotentExpand = MarkRMWIdempotentExpand + NumRMWCases - 1,
 
   // Change leading fence emissions to trailing.  (Likely only killed on arm32)
   // see AtomicExpandPass.cpp:318, 1210, 1232
@@ -82,6 +84,22 @@ enum class Mutation : std::uint16_t {
   // Swaps the leading and trailing fences in position 0 of the above.
   // see AtomicExpandPass.cpp:318, 320
   SwapBracketFences,
+
+  /*
+   * InstCombineAtomicRMW
+   */
+
+  // As MarkRMWIdempotent, but as part of the InstCombineAtomicRMW group.
+  // see AtomicExpandPass.cpp:1360, 1361, 1362, 1364, 1366.
+  MarkRMWIdempotentCombine,
+  // One sub-mutation for each case in the switch statement.
+  EndMarkRMWIdempotentCombine = MarkRMWIdempotentCombine + NumRMWCases - 1,
+
+  // As MarkRMWIdempotentExpand, but as part of the InstCombineAtomicRMW group.
+  // see AtomicExpandPass.cpp:1360, 1361, 1362, 1364, 1366.
+  MarkRMWSaturatingCombine,
+  // One sub-mutation for each case in the switch statement, except xchg.
+  EndMarkRMWSaturatingCombine = MarkRMWSaturatingCombine + (NumRMWCases - 1) - 1,
 
   /*
    * AArch64ISelLowering

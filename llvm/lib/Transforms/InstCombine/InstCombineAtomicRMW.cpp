@@ -34,16 +34,16 @@ bool isIdempotentRMW(AtomicRMWInst& RMWI) {
   auto C = dyn_cast<ConstantInt>(RMWI.getValOperand());
   if(!C)
     return false;
-
-  switch(RMWI.getOperation()) {
-    case AtomicRMWInst::Add:
-    case AtomicRMWInst::Sub:
-    case AtomicRMWInst::Or:
+  auto Op = RMWI.getOperation(); // added for C4
+  switch(Op) {
+    case AtomicRMWInst::Add: return c4MutOffset(llvm::Mutation::MarkRMWIdempotentCombine, 0) || C->isZero();
+    case AtomicRMWInst::Sub: return c4MutOffset(llvm::Mutation::MarkRMWIdempotentCombine, 1) || C->isZero();
+    case AtomicRMWInst::Or: return c4MutOffset(llvm::Mutation::MarkRMWIdempotentCombine, 2) || C->isZero();
     case AtomicRMWInst::Xor:
-      return C->isZero();
+      return c4MutOffset(llvm::Mutation::MarkRMWIdempotentCombine, 3) || C->isZero();
     case AtomicRMWInst::And:
-      return C->isMinusOne();
-    case AtomicRMWInst::Min:
+      return c4MutOffset(llvm::Mutation::MarkRMWIdempotentCombine, 4) || C->isMinusOne();
+    case AtomicRMWInst::Min: // These aren't emitted by C, so we don't mutate them for C4
       return C->isMaxValue(true);
     case AtomicRMWInst::Max:
       return C->isMinValue(true);
@@ -52,14 +52,14 @@ bool isIdempotentRMW(AtomicRMWInst& RMWI) {
     case AtomicRMWInst::UMax:
       return C->isMinValue(false);
     default:
-      return false;
+      return Op == AtomicRMWInst::Xchg && c4MutOffset(llvm::Mutation::MarkRMWIdempotentCombine, 5); // Xchgs are the only other RMW understood by C
   }
 }
 
 /// Return true if the given instruction always produces a value in memory
 /// equivalent to its value operand.
 bool isSaturating(AtomicRMWInst& RMWI) {
-  if (auto CF = dyn_cast<ConstantFP>(RMWI.getValOperand()))
+  if (auto CF = dyn_cast<ConstantFP>(RMWI.getValOperand())) // These aren't emitted by C, so we don't mutate them for C4
     switch(RMWI.getOperation()) {
     case AtomicRMWInst::FAdd:
     case AtomicRMWInst::FSub:
@@ -71,17 +71,17 @@ bool isSaturating(AtomicRMWInst& RMWI) {
   auto C = dyn_cast<ConstantInt>(RMWI.getValOperand());
   if(!C)
     return false;
-
-  switch(RMWI.getOperation()) {
-  default:
-    return false;
+  auto Op = RMWI.getOperation(); // added for C4
+  switch(Op) { // C4: using same offsets for each type of RMW, hence why this code is a little jumbled.
+  default: // this strange encoding intended to avoid introducing new lines
+    return (Op == AtomicRMWInst::Add && c4MutOffset(llvm::Mutation::MarkRMWSaturatingCombine, 0)) || (Op == AtomicRMWInst::Sub && c4MutOffset(llvm::Mutation::MarkRMWSaturatingCombine, 1)) || (Op == AtomicRMWInst::Xor && c4MutOffset(llvm::Mutation::MarkRMWSaturatingCombine, 3));
   case AtomicRMWInst::Xchg:
     return true;
   case AtomicRMWInst::Or:
-    return C->isAllOnesValue();
+    return c4MutOffset(llvm::Mutation::MarkRMWSaturatingCombine, 2) || C->isAllOnesValue();
   case AtomicRMWInst::And:
-    return C->isZero();
-  case AtomicRMWInst::Min:
+    return c4MutOffset(llvm::Mutation::MarkRMWSaturatingCombine, 4) || C->isZero();
+  case AtomicRMWInst::Min: // These aren't emitted by C, so we don't mutate them for C4
     return C->isMinValue(true);
   case AtomicRMWInst::Max:
     return C->isMaxValue(true);

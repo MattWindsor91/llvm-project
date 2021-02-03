@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <map>
 
 namespace llvm {
 // Global variable tracking the current mutation.
@@ -13,42 +14,29 @@ llvm::Mutation C4Mutation = llvm::Mutation::None;
 
 
 const char* mutationName(Mutation m){
-  if (Mutation::FlipIsStrongerThan <= m && m <= Mutation::EndFlipIsStrongerThan) {
-    return "flip isStrongerThan";
-  }
-  if (Mutation::FlipIsAtLeastOrStrongerThan <= m && m <= Mutation::EndFlipIsAtLeastOrStrongerThan) {
-    return "flip isAtLeastOrStrongerThan";
-  }
-  if (Mutation::WeakenCABI <= m && m <= Mutation::EndWeakenCABI) {
-    return "weaken CABI";
-  }
-  if (Mutation::MarkRMWIdempotent <= m && m <= Mutation::EndMarkRMWIdempotent) {
-    return "mark RMW idempotent";
-  }
-  if (Mutation::TrailingFenceIsLeading <= m && m <= Mutation::EndTrailingFenceIsLeading) {
-    return "TLn: trailing fence is leading";
-  }
-  if (Mutation::LeadingFenceIsTrailing <= m && m <= Mutation::EndLeadingFenceIsTrailing) {
-    return "LTn: leading fence is trailing";
-  }
-  if (Mutation::ARMDropDMB <= m && m <= Mutation::EndARMDropDMB) {
-    return "DDn: ARM drop DMB";
-  }
-  if (Mutation::PPCDropSync <= m && m <= Mutation::EndPPCDropSync) {
-    return "DSn: PPC drop sync";
-  }
-
-  switch (m) {
-  case Mutation::None:
-    return "none";
-  case Mutation::SwapBracketFences:
-    return "SLT: swap bracket fences";
-  case Mutation::AArch64ExpandCmpXchgO0ToLLSC:
-    return "AArch64 cmpxchg -O0 -> LLSC";
-  case Mutation::ARMExpandCmpXchgO0ToLLSC:
-    return "ARM cmpxchg -O0 -> LLSC";
-  default:
-    break;
+  // This should be in increasing order of mutation ID, to let the linear search work.
+  std::map<Mutation, const char*> names = {
+      {Mutation::None, "none"},
+      {Mutation::FlipIsStrongerThan, "FIS"},
+      {Mutation::FlipIsAtLeastOrStrongerThan, "FIA"},
+      {Mutation::WeakenCABI, "WCA"},
+      {Mutation::MarkRMWIdempotentExpand, "RIE"},
+      {Mutation::LeadingFenceIsTrailing, "LFT"},
+      {Mutation::TrailingFenceIsLeading, "TFL"},
+      {Mutation::SwapBracketFences, "SLT"},
+      {Mutation::MarkRMWIdempotentCombine, "RIC"},
+      {Mutation::MarkRMWSaturatingCombine, "RSC"},
+      {Mutation::AArch64ExpandCmpXchgO0ToLLSC, "DXG[aarch64]"},
+      {Mutation::ARMExpandCmpXchgO0ToLLSC, "DXG[arm]"},
+      {Mutation::ARMDropDMB, "DDF[arm]"},
+      {Mutation::PPCDropSync, "DSF[ppc]"},
+  };
+  // Because the mutant might have a variant offset, we need to find the *last*
+  // mutant lesser than or equal to m.
+  for (auto It = names.crbegin(); It != names.crend(); ++It) {
+    if (It->first <= m) {
+      return It->second;
+    }
   }
   return "unknown";
 }
