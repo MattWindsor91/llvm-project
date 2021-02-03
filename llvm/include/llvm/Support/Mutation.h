@@ -41,19 +41,25 @@ enum class Mutation : std::uint16_t {
    * AtomicOrdering
    */
 
-  // One mutation each for every possible bitflip in the IsStrongerThan table.
+  // [FIS] Flips bits in the isStrongerThan table.
+  //
+  // Rationale: simulate typos in the table.
+  //
   // see AtomicOrdering.h:102
   FlipIsStrongerThan,
-  // One sub-mutation for each pair of (viable) memory orders.
+  // One variant for each pair of (viable) memory orders.
   EndFlipIsStrongerThan = FlipIsStrongerThan + MemOrderEntries - 1,
 
-  // As above but for IsAtLeastOrStrongerThan.
+  // [FIA] As above but for IsAtLeastOrStrongerThan.
+  //
+  // Rationale: simulate typos in the table.
+  //
   // see AtomicOrdering.h:117
   FlipIsAtLeastOrStrongerThan,
-  // One sub-mutation for each pair of (viable) memory orders.
+  // One variant for each pair of (viable) memory orders.
   EndFlipIsAtLeastOrStrongerThan = FlipIsAtLeastOrStrongerThan + MemOrderEntries - 1,
 
-  // Set acq/rel/acqrel/seq_cst (in that order) to relaxed in the C ABI mapping.
+  // [WCA] Set acq/rel/acqrel/seq_cst (in that order) to relaxed in the C ABI mapping.
   // see AtomicOrdering.h:147
   WeakenCABI,
   // One sub-mutation for each memory order above.
@@ -63,25 +69,34 @@ enum class Mutation : std::uint16_t {
    * AtomicExpandPass
    */
 
-  // Spuriously mark a RMW as idempotent. (Likely only killed on x86)
+  // [RIE] Spuriously mark a RMW as idempotent. (Likely only killed on x86)
   // see AtomicExpandPass.cpp:1360, 1361, 1362, 1364, 1366.
   MarkRMWIdempotentExpand,
-  // One sub-mutation for each case in the switch statement.
+  // One variant for each case in the switch statement.
   EndMarkRMWIdempotentExpand = MarkRMWIdempotentExpand + NumRMWCases - 1,
 
-  // Change leading fence emissions to trailing.  (Likely only killed on arm32)
+  // [LFT] Change leading fence emissions to trailing.
+  //
+  // Rationale: bracketing fence emission swap is a known compiler bug.
+  //
   // see AtomicExpandPass.cpp:318, 1210, 1232
   LeadingFenceIsTrailing,
-  // One sub-mutation for each of the three insertions above.
+  // One variant for each of the three insertions above.
   EndLeadingFenceIsTrailing = LeadingFenceIsTrailing + NumLeadingTrailingFences - 1,
 
-  // Change trailing fence emissions to leading.  (Likely only killed on arm32)
+  // [TFL] Change trailing fence emissions to leading.
+  //
+  // Rationale: bracketing fence emission swap is a known compiler bug.
+  //
   // see AtomicExpandPass.cpp:320, 1270, 1293
   TrailingFenceIsLeading,
-  // One sub-mutation for each of the three insertions above.
+  // One variant for each of the three insertions above.
   EndTrailingFenceIsLeading = TrailingFenceIsLeading + NumLeadingTrailingFences - 1,
 
-  // Swaps the leading and trailing fences in position 0 of the above.
+  // [SLT] Swaps the leading and trailing fences in position 0 of the above.
+  //
+  // Rationale: bracketing fence emission swap is a known compiler bug.
+  //
   // see AtomicExpandPass.cpp:318, 320
   SwapBracketFences,
 
@@ -89,23 +104,34 @@ enum class Mutation : std::uint16_t {
    * InstCombineAtomicRMW
    */
 
-  // As MarkRMWIdempotent, but as part of the InstCombineAtomicRMW group.
-  // see AtomicExpandPass.cpp:1360, 1361, 1362, 1364, 1366.
+  // [RIC] As MarkRMWIdempotentExpand, but as part of the InstCombineAtomicRMW group.
+  // see InstCombineAtomicRMW.cpp:39, 40, 41, 43, 45, 55.
   MarkRMWIdempotentCombine,
-  // One sub-mutation for each case in the switch statement.
+  // One variant for each case in the switch statement.
   EndMarkRMWIdempotentCombine = MarkRMWIdempotentCombine + NumRMWCases - 1,
 
-  // As MarkRMWIdempotentExpand, but as part of the InstCombineAtomicRMW group.
-  // see AtomicExpandPass.cpp:1360, 1361, 1362, 1364, 1366.
+  // [RSC] Spuriously marks RMWs as saturating in InstCombineAtomicRMW.
+  // see InstCombineAtomicRMW.cpp:77, 77 (not a typo), 81, 77 (also not a typo), 83.
   MarkRMWSaturatingCombine,
-  // One sub-mutation for each case in the switch statement, except xchg.
+  // One variant for each case in the switch statement, except xchg.
   EndMarkRMWSaturatingCombine = MarkRMWSaturatingCombine + (NumRMWCases - 1) - 1,
+
+  // Disables isVolatile() gate on visitAtomicRMWInst.
+  //
+  // Rationale: comment ('we chose not to canonicalize out of general paranoia
+  // about user expectations around volatile).
+  //
+  // see InstCombineAtomicRMW.cpp:101
+  VisitVolatileRMW,
 
   /*
    * AArch64ISelLowering
    */
 
-  // Drop a special-case in AArch64 cmpxchg lowering that prevents LLSC lowering.
+  // [DXG] Drop a special-case in AArch64 cmpxchg lowering that prevents LLSC lowering.
+  //
+  // Rationale: comment above suggests this sidesteps a failure condition.
+  //
   // see AArch64ISelLowering.cpp:14626
   AArch64ExpandCmpXchgO0ToLLSC,
 
@@ -113,24 +139,33 @@ enum class Mutation : std::uint16_t {
    * ARMISelLowering
    */
 
-  // Drop a special-case in ARM cmpxchg lowering that prevents LLSC lowering.
+  // [DXG] Drop a special-case in ARM cmpxchg lowering that prevents LLSC lowering.
+  //
+  // Rationale: comment above suggests this sidesteps a failure condition.
+  //
   // see ARMISelLowering.cpp:18260
   ARMExpandCmpXchgO0ToLLSC,
 
-  // Drop leading and trailing DMB barrier emissions.
+  // [DDF] Drop leading and trailing DMB barrier emissions.
+  //
+  // Rationale: fence omission is a classic compiler bug.
+  //
   // see ARMISelLowering.cpp:18180, 18183, 18184, 18204, 18205, 18206
   ARMDropDMB,
-  // One sub-mutation for each case where we emit a DMB.
+  // One variant for each case where we emit a DMB.
   EndARMDropDMB = ARMDropDMB + NumDMBs - 1,
 
   /*
    * PPCISelLowering
    */
 
-  // Drop sync barrier emissions.
+  // [DSF] Drop sync barrier emissions.
+  //
+  // Rationale: fence omission is a classic compiler bug.
+  //
   // see PPCISelLowering.cpp:11303, 11305, 11317, 11323
   PPCDropSync,
-  // One sub-mutation for each case where we emit a sync.
+  // One variant for each case where we emit a sync.
   EndPPCDropSync = PPCDropSync + NumSyncs - 1,
 
   Count,
