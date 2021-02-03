@@ -98,7 +98,7 @@ Instruction *InstCombiner::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
   // Volatile RMWs perform a load and a store, we cannot replace this by just a
   // load or just a store. We chose not to canonicalize out of general paranoia
   // about user expectations around volatile. 
-  if (RMWI.isVolatile() && !c4Mut(Mutation::VisitVolatileRMW))
+  if (RMWI.isVolatile() && !c4Mut(Mutation::DropVolatileGuard))
     return nullptr;
 
   // Any atomicrmw op which produces a known result in memory can be

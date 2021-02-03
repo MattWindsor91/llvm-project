@@ -34,8 +34,39 @@ constexpr uint16_t NumDMBs = 6;
 constexpr uint16_t NumSyncs = 4;
 
 
+// A mutant index.
+//
+// Mutants are organised as follows:
+//
+// - Mutant 0 is the absence of a mutant.
+// - Some mutants have large gaps between them.  This allows encoding variants
+//   of mutants, by adding the variant offset to the mutant index and casting
+//   to Mutation.
+// - Whenever a mutant has more than one variant, we have an 'EndMutantName'
+//   pseudo-mutant which marks the last variant in that mutant.  These are
+//   so that the next mutant starts off at the right index.
+// - Mutants are organised per-target (target-independent mutants first) with
+//   multi-file operators first and then, file-by-file, operators specific to
+//   one file.  Some mutants are broken up into several IDs to make this
+//   organisation possible.
+// - Each mutant has a file reference, a 3-letter code (for use in papers and
+//   suchlike), and, where possible, a rationale.
 enum class Mutation : std::uint16_t {
   None = 0,
+
+  /*
+   * Multiple files and architectures
+   */
+
+  // [DVG] Disables isVolatile() guards.
+  //
+  // Rationale:
+  //  - InstCombineAtomicRMW.cpp:101:
+  //    comment ('we chose not to canonicalize out of general paranoia about
+  //    user expectations around volatile).
+  //
+  // see InstCombineAtomicRMW.cpp:101
+  DropVolatileGuard,
 
   /*
    * AtomicOrdering
@@ -116,13 +147,6 @@ enum class Mutation : std::uint16_t {
   // One variant for each case in the switch statement, except xchg.
   EndMarkRMWSaturatingCombine = MarkRMWSaturatingCombine + (NumRMWCases - 1) - 1,
 
-  // Disables isVolatile() gate on visitAtomicRMWInst.
-  //
-  // Rationale: comment ('we chose not to canonicalize out of general paranoia
-  // about user expectations around volatile).
-  //
-  // see InstCombineAtomicRMW.cpp:101
-  VisitVolatileRMW,
 
   /*
    * AArch64ISelLowering
@@ -145,6 +169,18 @@ enum class Mutation : std::uint16_t {
   //
   // see ARMISelLowering.cpp:18260
   ARMExpandCmpXchgO0ToLLSC,
+
+  /// [DAG] Drop an Arm8-specific atomic guard.
+  //
+  // Currently there is only one, but there are other atomic guards in other
+  // architectures.
+  //
+  // Rationale: comment: 'we could allow unordered and monotonic atomics here,
+  // but we need to make sure the resulting ldm/stm is correctly marked as
+  // atomic.'
+  //
+  // see ARMLoadStoreOptimizer:1640
+  ARMDropAtomicGuard,
 
   // [DDF] Drop leading and trailing DMB barrier emissions.
   //

@@ -1637,7 +1637,7 @@ static bool isMemoryOp(const MachineInstr &MI) {
   // Don't touch volatile memory accesses - we may be changing their order.
   // TODO: We could allow unordered and monotonic atomics here, but we need to
   // make sure the resulting ldm/stm is correctly marked as atomic.
-  if (MMO.isVolatile() || MMO.isAtomic())
+  if (MMO.isVolatile() || (MMO.isAtomic() && !c4Mut(llvm::Mutation::ARMDropAtomicGuard)))
     return false;
 
   // Unaligned ldr/str is emulated by some kernels, but unaligned ldm/stm is
