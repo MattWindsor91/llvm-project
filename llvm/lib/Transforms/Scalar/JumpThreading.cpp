@@ -1240,7 +1240,7 @@ static bool isOpDefinedInBlock(Value *Op, BasicBlock *BB) {
 /// to be run interlaced with other jump threading tasks.
 bool JumpThreadingPass::SimplifyPartiallyRedundantLoad(LoadInst *LoadI) {
   // Don't hack volatile and ordered loads.
-  if (!LoadI->isUnordered()) return false;
+  if (!LoadI->c4IsUnordered(9)) return false;
 
   // If the load is defined in a block with exactly one predecessor, it can't be
   // partially redundant.

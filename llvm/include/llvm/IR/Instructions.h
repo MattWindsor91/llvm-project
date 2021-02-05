@@ -261,7 +261,7 @@ public:
             getOrdering() == AtomicOrdering::Unordered) &&
            !isVolatile();
   }
-
+  bool c4IsUnordered(uint16_t Variant) const { return isUnordered() || c4MutOffset(Mutation::DropUnorderedGuard, Variant);}
   Value *getPointerOperand() { return getOperand(0); }
   const Value *getPointerOperand() const { return getOperand(0); }
   static unsigned getPointerOperandIndex() { return 0U; }
@@ -393,7 +393,7 @@ public:
             getOrdering() == AtomicOrdering::Unordered) &&
            !isVolatile();
   }
-
+  bool c4IsUnordered(uint16_t Variant) const { return isUnordered() || c4MutOffset(Mutation::DropUnorderedGuard, Variant);}
   Value *getValueOperand() { return getOperand(0); }
   const Value *getValueOperand() const { return getOperand(0); }
 

@@ -3,6 +3,7 @@
 //
 
 #include "llvm/Support/Mutation.h"
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -12,36 +13,40 @@ namespace llvm {
 // Global variable tracking the current mutation.
 llvm::Mutation C4Mutation = llvm::Mutation::None;
 
+// This should be in increasing order of mutation ID, to let the linear search work.
+const std::map<Mutation, const char*> MutationNames = {
+    {Mutation::None, "none"},
+    {Mutation::DropAtomicGuard, "DAG"},
+    {Mutation::DropVolatileGuard, "DVG"},
+    {Mutation::DropUnorderedGuard, "DUG"},
+    {Mutation::FlipIsStrongerThan, "FIS"},
+    {Mutation::FlipIsAtLeastOrStrongerThan, "FIA"},
+    {Mutation::WeakenCABI, "WCA"},
+    {Mutation::MarkRMWIdempotentExpand, "RIE"},
+    {Mutation::LeadingFenceIsTrailing, "LFT"},
+    {Mutation::TrailingFenceIsLeading, "TFL"},
+    {Mutation::SwapBracketFences, "SLT"},
+    {Mutation::MarkRMWIdempotentCombine, "RIC"},
+    {Mutation::MarkRMWSaturatingCombine, "RSC"},
+    {Mutation::AArch64ExpandCmpXchgO0ToLLSC, "DXG[aarch64]"},
+    {Mutation::ARMExpandCmpXchgO0ToLLSC, "DXG[arm]"},
+    {Mutation::ARMDropAtomicGuard, "DAG[arm]"},
+    {Mutation::ARMDropDMB, "DDF[arm]"},
+    {Mutation::PPCDropSync, "DSF[ppc]"},
+};
 
-const char* mutationName(Mutation m){
-  // This should be in increasing order of mutation ID, to let the linear search work.
-  std::map<Mutation, const char*> names = {
-      {Mutation::None, "none"},
-      {Mutation::DropAtomicGuard, "DAG"},
-      {Mutation::DropVolatileGuard, "DVG"},
-      {Mutation::FlipIsStrongerThan, "FIS"},
-      {Mutation::FlipIsAtLeastOrStrongerThan, "FIA"},
-      {Mutation::WeakenCABI, "WCA"},
-      {Mutation::MarkRMWIdempotentExpand, "RIE"},
-      {Mutation::LeadingFenceIsTrailing, "LFT"},
-      {Mutation::TrailingFenceIsLeading, "TFL"},
-      {Mutation::SwapBracketFences, "SLT"},
-      {Mutation::MarkRMWIdempotentCombine, "RIC"},
-      {Mutation::MarkRMWSaturatingCombine, "RSC"},
-      {Mutation::AArch64ExpandCmpXchgO0ToLLSC, "DXG[aarch64]"},
-      {Mutation::ARMExpandCmpXchgO0ToLLSC, "DXG[arm]"},
-      {Mutation::ARMDropAtomicGuard, "DAG[arm]"},
-      {Mutation::ARMDropDMB, "DDF[arm]"},
-      {Mutation::PPCDropSync, "DSF[ppc]"},
-  };
+Mutation parentMutation(Mutation M) {
   // Because the mutant might have a variant offset, we need to find the *last*
   // mutant lesser than or equal to m.
-  for (auto It = names.crbegin(); It != names.crend(); ++It) {
-    if (It->first <= m) {
-      return It->second;
-    }
+  return find_if(MutationNames.crbegin(), MutationNames.crend(), [=](auto M2) { return M2.first <= M; })->first;
+}
+
+const char* mutationName(Mutation M){
+  auto It = MutationNames.find(M);
+  if (It == MutationNames.end()) {
+    return "unknown";
   }
-  return "unknown";
+  return It->second;
 }
 
 void setupMutation() {
@@ -52,7 +57,9 @@ void setupMutation() {
   auto Int = std::stoi(Str);
   auto IntMod = Int % static_cast<int>(llvm::Mutation::Count);
   C4Mutation = static_cast<llvm::Mutation>(IntMod);
+  auto Parent = parentMutation(C4Mutation);
+  auto Variant = IntMod - static_cast<int16_t>(Parent);
 
-  std::cerr << "MUTATION SELECTED: " << IntMod << " (= " << mutationName(C4Mutation) << ", input=" << Int << ")" << std::endl;
+  std::cerr << "MUTATION SELECTED: " << IntMod << " (= " << mutationName(Parent) << ":" << Variant << ", input=" << Int << ")" << std::endl;
 }
 }

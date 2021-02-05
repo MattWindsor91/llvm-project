@@ -357,7 +357,7 @@ Value *llvm::FindAvailableLoadedValue(LoadInst *Load,
                                       AAResults *AA, bool *IsLoad,
                                       unsigned *NumScanedInst) {
   // Don't CSE load that is volatile or anything stronger than unordered.
-  if (!Load->isUnordered())
+  if (!Load->c4IsUnordered(0))
     return nullptr;
 
   return FindAvailablePtrLoadStore(

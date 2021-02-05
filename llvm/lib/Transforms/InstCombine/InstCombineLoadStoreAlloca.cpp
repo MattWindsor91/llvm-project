@@ -540,7 +540,7 @@ static bool isMinMaxWithLoads(Value *V, Type *&LoadTy) {
 static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
   // FIXME: We could probably with some care handle both volatile and ordered
   // atomic loads here but it isn't clear that this is important.
-  if (!LI.isUnordered())
+  if (!LI.c4IsUnordered(3))
     return nullptr;
 
   if (LI.use_empty())

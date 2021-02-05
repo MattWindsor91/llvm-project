@@ -33,6 +33,41 @@ constexpr uint16_t NumDMBs = 6;
 // Number of sync making endpoints in PPCISelLowering.
 constexpr uint16_t NumSyncs = 4;
 
+// Number of variants for DropUnorderedGuard:
+// sites where we force isUnordered() to true.
+//
+// Sites:
+//   0: Loads:360
+//      rationale: comment 'don't CSE load that is volatile or anything
+//      stronger than unordered'.
+//   1: InstCombineLoadStoreAlloca:1384
+//      rationale: comment 'FIXME: We could probably with some care handle both
+//      volatile and ordered atomic loads here but it isn't clear that this is
+//      important.'
+//   2: DeadStoreElimination:282
+//      rationale: comment 'Don't remove volatile/atomic stores'.
+//      NB: this might overly affect nonatomic volatiles; need to check.
+//   3: DeadStoreElimination:955
+//      rationale: comment 'Be conservative with atomic/volatile load'
+//      NB: as above
+//   4: EarlyCSE:1115 (NB: higher-level predicate, not c4IsUnordered)
+//      rationale: comment '(conservatively) we can't peak past the ordering
+//      implied by this operation...'
+//   5: EarlyCSE:1142 (NB: higher-level predicate, not c4IsUnordered)
+//      rationale: comment 'We don't yet handle removing loads with ordering
+//      of any kind.'
+//   6: EarlyCSE:1237 (NB: higher-level predicate, not c4IsUnordered)
+//      rationale: comment 'We don't yet handle removing stores with ordering
+//      of any kind.'
+//   7: EarlyCSE:1319 (NB: higher-level predicate, not c4IsUnordered)
+//      rationale: comment '...We don't yet handle DSE on ordered or volatile
+//      stores...'
+//   8: GVN:1593
+//      rationale: comment 'This code hasn't been audited for ordered or
+//      volatile memory accesses'
+//   9: JumpThreading:1243
+//      rationale: comment 'Don't hack volatile and ordered loads.'
+constexpr uint16_t NumUnorderedGuards = 10;
 
 // A mutant index.
 //
@@ -58,24 +93,34 @@ enum class Mutation : std::uint16_t {
    * Multiple files and architectures
    */
 
-  // [DAG] Disables strategic isAtomic() guards.
+  // [DAG] Disables strategic isAtomic() guards by forcing them to false.
   // See also the architecture-specific equivalents.
   //
   // Sites:
-  //  0: InstCombinePHI.cpp:548:
-  //     rationale: comment 'this transform is allowed in some cases for atomic
-  //       operations'.
+  //   0: InstCombinePHI.cpp:548:
+  //      rationale: comment 'this transform is allowed in some cases for atomic
+  //        operations'.
   DropAtomicGuard,
 
-  // [DVG] Disables isVolatile() guards.
+  // [DVG] Disables isVolatile() guards by forcing them to false.
   //
   // Sites:
-  //  0: InstCombineAtomicRMW.cpp:101:
-  //     rationale: comment 'we chose not to canonicalize out of general
-  //       paranoia about user expectations around volatile'.
+  //   0: InstCombineAtomicRMW.cpp:101:
+  //      rationale: comment 'we chose not to canonicalize out of general
+  //        paranoia about user expectations around volatile'.
   //
   // see InstCombineAtomicRMW.cpp:101
   DropVolatileGuard,
+
+  // [DUG] Disables isUnordered() guards by forcing them to true.
+  //
+  // Most of these mutants are effected by substituting c4IsUnordered(VARIANT)
+  // for isUnordered() at the call site.  Some (in EarlyCSE) target a higher
+  // level predicate, and don't do this.
+  //
+  // See comment in NumUnorderedGuards.
+  DropUnorderedGuard,
+  EndDropUnorderedGuard = DropUnorderedGuard + NumUnorderedGuards - 1,
 
   /*
    * AtomicOrdering
@@ -233,6 +278,7 @@ inline bool c4MutOffset(Mutation M, uint16_t Offset) {
 }
 
 void setupMutation();
+Mutation parentMutation(Mutation M);
 const char *mutationName(Mutation M);
 }
 

@@ -1112,7 +1112,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     if (MemInst.isValid() && MemInst.isLoad()) {
       // (conservatively) we can't peak past the ordering implied by this
       // operation, but we can add this load to our set of available values
-      if (MemInst.isVolatile() || !MemInst.isUnordered()) {
+      if (MemInst.isVolatile() || (!MemInst.isUnordered() && c4MutOffset(llvm::Mutation::DropUnorderedGuard, 4))) {
         LastStore = nullptr;
         ++CurrentGeneration;
       }
@@ -1139,7 +1139,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       if (InVal.DefInst != nullptr &&
           InVal.MatchingId == MemInst.getMatchingId() &&
           // We don't yet handle removing loads with ordering of any kind.
-          !MemInst.isVolatile() && MemInst.isUnordered() &&
+          !MemInst.isVolatile() && (MemInst.isUnordered() || c4MutOffset(llvm::Mutation::DropUnorderedGuard, 5)) &&
           // We can't replace an atomic load with one which isn't also atomic.
           InVal.IsAtomic >= MemInst.isAtomic() &&
           (isOperatingOnInvariantMemAt(&Inst, InVal.Generation) ||
@@ -1234,7 +1234,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
           InVal.DefInst == getOrCreateResult(&Inst, InVal.DefInst->getType()) &&
           InVal.MatchingId == MemInst.getMatchingId() &&
           // We don't yet handle removing stores with ordering of any kind.
-          !MemInst.isVolatile() && MemInst.isUnordered() &&
+          !MemInst.isVolatile() && (MemInst.isUnordered() || c4MutOffset(llvm::Mutation::DropUnorderedGuard, 6)) &&
           (isOperatingOnInvariantMemAt(&Inst, InVal.Generation) ||
            isSameMemGeneration(InVal.Generation, CurrentGeneration,
                                InVal.DefInst, &Inst))) {
@@ -1279,7 +1279,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         // one anyway and the atomic one might never have become visible.
         if (LastStore) {
           ParseMemoryInst LastStoreMemInst(LastStore, TTI);
-          assert(LastStoreMemInst.isUnordered() &&
+          assert((!c4Mut(llvm::Mutation::None) || LastStoreMemInst.isUnordered()) && /* attempt to stop mutants from triggering assertion failures */
                  !LastStoreMemInst.isVolatile() &&
                  "Violated invariant");
           if (LastStoreMemInst.isMatchingMemLoc(MemInst)) {
@@ -1316,7 +1316,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         // since fences are slightly stronger than stores in their ordering,
         // it's not clear this is a profitable transform. Another option would
         // be to merge the ordering with that of the post dominating store.
-        if (MemInst.isUnordered() && !MemInst.isVolatile())
+        if ((MemInst.isUnordered() || c4MutOffset(llvm::Mutation::DropUnorderedGuard, 7)) && !MemInst.isVolatile())
           LastStore = &Inst;
         else
           LastStore = nullptr;

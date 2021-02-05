@@ -279,7 +279,7 @@ static MemoryLocation getLocForRead(Instruction *Inst,
 static bool isRemovable(Instruction *I) {
   // Don't remove volatile/atomic stores.
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    return SI->isUnordered();
+    return SI->isUnordered() || c4MutOffset(llvm::Mutation::DropUnorderedGuard, 2);
 
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
     switch (II->getIntrinsicID()) {
@@ -952,7 +952,7 @@ static bool handleEndBlock(BasicBlock &BB, AliasAnalysis *AA,
 
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
-      if (!L->isUnordered()) // Be conservative with atomic/volatile load
+      if (!L->c4IsUnordered(3)) // Be conservative with atomic/volatile load
         break;
       LoadedLoc = MemoryLocation::get(L);
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(BBI)) {

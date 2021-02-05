@@ -1590,7 +1590,7 @@ bool GVN::processLoad(LoadInst *L) {
     return false;
 
   // This code hasn't been audited for ordered or volatile memory access
-  if (!L->isUnordered())
+  if (!L->c4IsUnordered(8))
     return false;
 
   if (L->use_empty()) {
