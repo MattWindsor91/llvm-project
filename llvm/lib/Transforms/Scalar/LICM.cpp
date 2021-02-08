@@ -1051,7 +1051,7 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
 
   // Loads have extra constraints we have to verify before we can hoist them.
   if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
-    if (!LI->isUnordered())
+    if (!LI->c4IsUnordered(10))
       return false; // Don't sink/hoist volatile or ordered atomic loads!
 
     // Loads from constant memory are always safe to move, even if they end up
@@ -1160,7 +1160,7 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
     } else // MSSAU
       return isOnlyMemoryAccess(FI, CurLoop, MSSAU);
   } else if (auto *SI = dyn_cast<StoreInst>(&I)) {
-    if (!SI->isUnordered())
+    if (!SI->c4IsUnordered(11))
       return false; // Don't sink/hoist volatile or ordered atomic store!
 
     // We can only hoist a store that we can prove writes a value which is not
@@ -1213,7 +1213,7 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
             } else if (const auto *MD = dyn_cast<MemoryDef>(&MA)) {
               if (auto *LI = dyn_cast<LoadInst>(MD->getMemoryInst())) {
                 (void)LI; // Silence warning.
-                assert(!LI->isUnordered() && "Expected unordered load");
+                assert((c4MutationEnabled() || !LI->isUnordered()) && "Expected unordered load");
                 return false;
               }
               // Any call, while it may not be clobbering SI, it may be a use.
@@ -1936,7 +1936,7 @@ bool llvm::promoteLoopAccessesToScalars(
       // If there is an non-load/store instruction in the loop, we can't promote
       // it.
       if (LoadInst *Load = dyn_cast<LoadInst>(UI)) {
-        if (!Load->isUnordered())
+        if (!Load->c4IsUnordered(12))
           return false;
 
         SawUnorderedAtomic |= Load->isAtomic();
@@ -1959,7 +1959,7 @@ bool llvm::promoteLoopAccessesToScalars(
         // pointer.
         if (UI->getOperand(1) != ASIV)
           continue;
-        if (!Store->isUnordered())
+        if (!Store->c4IsUnordered(13))
           return false;
 
         SawUnorderedAtomic |= Store->isAtomic();

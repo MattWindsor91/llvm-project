@@ -279,7 +279,7 @@ static MemoryLocation getLocForRead(Instruction *Inst,
 static bool isRemovable(Instruction *I) {
   // Don't remove volatile/atomic stores.
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    return SI->isUnordered() || c4MutOffset(llvm::Mutation::DropUnorderedGuard, 2);
+    return SI->c4IsUnordered(2);
 
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
     switch (II->getIntrinsicID()) {

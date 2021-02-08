@@ -423,7 +423,7 @@ LoopIdiomRecognize::isLegalStore(StoreInst *SI) {
   if (SI->isVolatile())
     return LegalStoreKind::None;
   // We only want simple or unordered-atomic stores.
-  if (!SI->isUnordered())
+  if (!SI->c4IsUnordered(14))
     return LegalStoreKind::None;
 
   // Don't convert stores of non-integral pointer types to memsets (which stores
@@ -465,7 +465,7 @@ LoopIdiomRecognize::isLegalStore(StoreInst *SI) {
   Constant *PatternValue = nullptr;
 
   // Note: memset and memset_pattern on unordered-atomic is yet not supported
-  bool UnorderedAtomic = SI->isUnordered() && !SI->isSimple();
+  bool UnorderedAtomic = SI->c4IsUnordered(15) && !SI->isSimple();
 
   // If we're allowed to form a memset, and the stored value would be
   // acceptable for memset, use it.
@@ -499,7 +499,7 @@ LoopIdiomRecognize::isLegalStore(StoreInst *SI) {
     if (!LI || LI->isVolatile())
       return LegalStoreKind::None;
     // Only allow simple or unordered-atomic loads
-    if (!LI->isUnordered())
+    if (!LI->c4IsUnordered(16))
       return LegalStoreKind::None;
 
     // See if the pointer expression is an AddRec like {base,+,1} on the current
@@ -1038,7 +1038,7 @@ public:
 /// for (i) A[i] = B[i];
 bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(StoreInst *SI,
                                                     const SCEV *BECount) {
-  assert(SI->isUnordered() && "Expected only non-volatile non-ordered stores.");
+  assert((c4MutationEnabled() || SI->isUnordered()) && "Expected only non-volatile non-ordered stores.");
 
   Value *StorePtr = SI->getPointerOperand();
   const SCEVAddRecExpr *StoreEv = cast<SCEVAddRecExpr>(SE->getSCEV(StorePtr));
@@ -1048,7 +1048,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(StoreInst *SI,
 
   // The store must be feeding a non-volatile load.
   LoadInst *LI = cast<LoadInst>(SI->getValueOperand());
-  assert(LI->isUnordered() && "Expected only non-volatile non-ordered loads.");
+  assert((c4MutationEnabled() || LI->isUnordered()) && "Expected only non-volatile non-ordered loads.");
 
   // See if the pointer expression is an AddRec like {base,+,1} on the current
   // loop, which indicates a strided load.  If we have something else, it's a

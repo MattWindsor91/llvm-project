@@ -62,4 +62,8 @@ void setupMutation() {
 
   std::cerr << "MUTATION SELECTED: " << IntMod << " (= " << mutationName(Parent) << ":" << Variant << ", input=" << Int << ")" << std::endl;
 }
+
+bool c4MutationEnabled() {
+  return C4Mutation != Mutation::None;
+}
 }

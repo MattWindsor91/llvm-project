@@ -37,37 +37,55 @@ constexpr uint16_t NumSyncs = 4;
 // sites where we force isUnordered() to true.
 //
 // Sites:
-//   0: Loads:360
-//      rationale: comment 'don't CSE load that is volatile or anything
-//      stronger than unordered'.
-//   1: InstCombineLoadStoreAlloca:1384
-//      rationale: comment 'FIXME: We could probably with some care handle both
-//      volatile and ordered atomic loads here but it isn't clear that this is
-//      important.'
-//   2: DeadStoreElimination:282
-//      rationale: comment 'Don't remove volatile/atomic stores'.
-//      NB: this might overly affect nonatomic volatiles; need to check.
-//   3: DeadStoreElimination:955
-//      rationale: comment 'Be conservative with atomic/volatile load'
-//      NB: as above
-//   4: EarlyCSE:1115 (NB: higher-level predicate, not c4IsUnordered)
-//      rationale: comment '(conservatively) we can't peak past the ordering
-//      implied by this operation...'
-//   5: EarlyCSE:1142 (NB: higher-level predicate, not c4IsUnordered)
-//      rationale: comment 'We don't yet handle removing loads with ordering
-//      of any kind.'
-//   6: EarlyCSE:1237 (NB: higher-level predicate, not c4IsUnordered)
-//      rationale: comment 'We don't yet handle removing stores with ordering
-//      of any kind.'
-//   7: EarlyCSE:1319 (NB: higher-level predicate, not c4IsUnordered)
-//      rationale: comment '...We don't yet handle DSE on ordered or volatile
-//      stores...'
-//   8: GVN:1593
-//      rationale: comment 'This code hasn't been audited for ordered or
-//      volatile memory accesses'
-//   9: JumpThreading:1243
-//      rationale: comment 'Don't hack volatile and ordered loads.'
-constexpr uint16_t NumUnorderedGuards = 10;
+//   00: Loads:360
+//       rationale: comment 'don't CSE load that is volatile or anything
+//       stronger than unordered'.
+//   01: InstCombineLoadStoreAlloca:1384
+//       rationale: comment 'FIXME: We could probably with some care handle both
+//       volatile and ordered atomic loads here but it isn't clear that this is
+//       important.'
+//   02: DeadStoreElimination:282
+//       rationale: comment 'Don't remove volatile/atomic stores'.
+//       NB: this might overly affect nonatomic volatiles; need to check.
+//   03: DeadStoreElimination:955
+//       rationale: comment 'Be conservative with atomic/volatile load'
+//       NB: as above
+//   04: EarlyCSE:1115 (NB: higher-level predicate, not c4IsUnordered)
+//       rationale: comment '(conservatively) we can't peak past the ordering
+//       implied by this operation...'
+//   05: EarlyCSE:1142 (NB: higher-level predicate, not c4IsUnordered)
+//       rationale: comment 'We don't yet handle removing loads with ordering
+//       of any kind.'
+//   06: EarlyCSE:1237 (NB: higher-level predicate, not c4IsUnordered)
+//       rationale: comment 'We don't yet handle removing stores with ordering
+//       of any kind.'
+//   07: EarlyCSE:1319 (NB: higher-level predicate, not c4IsUnordered)
+//       rationale: comment '...We don't yet handle DSE on ordered or volatile
+//       stores...'
+//   08: GVN:1593 (GVN = global value numbering)
+//       rationale: comment 'This code hasn't been audited for ordered or
+//       volatile memory accesses'
+//   09: JumpThreading:1243
+//       rationale: comment 'Don't hack volatile and ordered loads.'
+//   10: LICM:1054 (LICM = loop invariant code motion)
+//       rationale: comment 'Don't sink/hoist volatile or ordered atomic loads!'
+//       - also, loop motion contributed to Morisset et al. bug
+//   11: LICM:1163
+//       rationale: comment 'Don't sink/hoist volatile or ordered atomic store!'
+//       - also, loop motion contributed to Morisset et al. bug
+//   12: LICM:1939
+//       rationale: comment 'If there is an non-load/store instruction in the
+//       loop, we can't promote it'.
+//   13: LICM:1962
+//       rationale: proximity to other interesting hoists
+//   14: LoopIdiomRecognize:426
+//       rationale: comment 'We only want simple or unordered-atomic stores.'
+//   15: LoopIdiomRecognize:468
+//       rationale: comment 'memset and memset_pattern on unordered-atomic is
+//       yet not supported'
+//   16: LoopIdiomRecognize:502
+//       rationale: comment 'Only allow simple or unordered-atomic loads'
+constexpr uint16_t NumUnorderedGuards = 17;
 
 // A mutant index.
 //
@@ -280,6 +298,7 @@ inline bool c4MutOffset(Mutation M, uint16_t Offset) {
 void setupMutation();
 Mutation parentMutation(Mutation M);
 const char *mutationName(Mutation M);
+bool c4MutationEnabled();
 }
 
 #endif // LLVM_MUTATION_H
