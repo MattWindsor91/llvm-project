@@ -219,12 +219,11 @@ enum class Mutation : std::uint16_t {
   // One variant for each case in the switch statement, except xchg.
   EndMarkRMWSaturatingCombine = MarkRMWSaturatingCombine + (NumRMWCases - 1) - 1,
 
-
   /*
    * AArch64ISelLowering
    */
 
-  // [DXG] Drop a special-case in AArch64 cmpxchg lowering that prevents LLSC lowering.
+  // [DXG.a64] Drop a special-case in AArch64 cmpxchg lowering that prevents LLSC lowering.
   //
   // Rationale: comment above suggests this sidesteps a failure condition.
   //
@@ -235,14 +234,14 @@ enum class Mutation : std::uint16_t {
    * ARMISelLowering
    */
 
-  // [DXG] Drop a special-case in ARM cmpxchg lowering that prevents LLSC lowering.
+  // [DXG.arm] Drop a special-case in ARM cmpxchg lowering that prevents LLSC lowering.
   //
   // Rationale: comment above suggests this sidesteps a failure condition.
   //
   // see ARMISelLowering.cpp:18260
   ARMExpandCmpXchgO0ToLLSC,
 
-  /// [DAG] Drop an Arm8-specific atomic guard.
+  /// [DAG.arm] Drop an Arm8-specific atomic guard.
   //
   // Currently there is only one, but there are other atomic guards in other
   // architectures.
@@ -254,7 +253,7 @@ enum class Mutation : std::uint16_t {
   // see ARMLoadStoreOptimizer:1640
   ARMDropAtomicGuard,
 
-  // [DDF] Drop leading and trailing DMB barrier emissions.
+  // [DFE.arm] Drop leading and trailing DMB barrier emissions.
   //
   // Rationale: fence omission is a classic compiler bug.
   //
@@ -267,7 +266,7 @@ enum class Mutation : std::uint16_t {
    * PPCISelLowering
    */
 
-  // [DSF] Drop sync barrier emissions.
+  // [DFE.ppc] Drop sync barrier emissions.
   //
   // Rationale: fence omission is a classic compiler bug.
   //
@@ -278,6 +277,20 @@ enum class Mutation : std::uint16_t {
 
   Count,
 };
+
+// Checks for making sure the mutant count is correct.
+static_assert(Mutation::EndDropUnorderedGuard == static_cast<Mutation>(19), "count check failed");
+static_assert(Mutation::EndFlipIsStrongerThan == static_cast<Mutation>(68), "count check failed");
+static_assert(Mutation::EndFlipIsAtLeastOrStrongerThan == static_cast<Mutation>(117), "count check failed");
+static_assert(Mutation::EndWeakenCABI == static_cast<Mutation>(121), "count check failed");
+static_assert(Mutation::EndMarkRMWIdempotentExpand == static_cast<Mutation>(127), "count check failed");
+static_assert(Mutation::EndLeadingFenceIsTrailing == static_cast<Mutation>(130), "count check failed");
+static_assert(Mutation::EndTrailingFenceIsLeading == static_cast<Mutation>(133), "count check failed");
+static_assert(Mutation::EndMarkRMWIdempotentCombine == static_cast<Mutation>(140), "count check failed");
+static_assert(Mutation::EndMarkRMWSaturatingCombine == static_cast<Mutation>(145), "count check failed");
+static_assert(Mutation::EndARMDropDMB == static_cast<Mutation>(154), "count check failed");
+static_assert(Mutation::EndPPCDropSync == static_cast<Mutation>(158), "count check failed");
+static_assert(Mutation::Count == static_cast<Mutation>(159), "count check failed");
 
 extern Mutation C4Mutation;
 
@@ -299,6 +312,6 @@ void setupMutation();
 Mutation parentMutation(Mutation M);
 const char *mutationName(Mutation M);
 bool c4MutationEnabled();
-}
+} // end namespace llvm
 
 #endif // LLVM_MUTATION_H

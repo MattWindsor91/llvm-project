@@ -28,11 +28,11 @@ const std::map<Mutation, const char*> MutationNames = {
     {Mutation::SwapBracketFences, "SLT"},
     {Mutation::MarkRMWIdempotentCombine, "RIC"},
     {Mutation::MarkRMWSaturatingCombine, "RSC"},
-    {Mutation::AArch64ExpandCmpXchgO0ToLLSC, "DXG[aarch64]"},
-    {Mutation::ARMExpandCmpXchgO0ToLLSC, "DXG[arm]"},
-    {Mutation::ARMDropAtomicGuard, "DAG[arm]"},
-    {Mutation::ARMDropDMB, "DDF[arm]"},
-    {Mutation::PPCDropSync, "DSF[ppc]"},
+    {Mutation::AArch64ExpandCmpXchgO0ToLLSC, "DXG.a64"},
+    {Mutation::ARMExpandCmpXchgO0ToLLSC, "DXG.arm"},
+    {Mutation::ARMDropAtomicGuard, "DAG.arm"},
+    {Mutation::ARMDropDMB, "DFE.arm"},
+    {Mutation::PPCDropSync, "DFE.ppc"},
 };
 
 Mutation parentMutation(Mutation M) {
